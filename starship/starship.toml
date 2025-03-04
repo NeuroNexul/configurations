@@ -1,10 +1,75 @@
 
+# Configuration for Starship prompt
+# Check out https://starship.rs/config/ for detailed configuration options!
 
-[aws]
-format = '\[[$symbol($profile)(\($region\))(\[$duration\])]($style)\]'
+# format = """
+# $username/$hostname\
+# $memory_usage\
+# $os
+# >\
+# """
+# add_newline = true
+
+[time]
+format = '[$time]($style)'
+
+[username]
+show_always = true
+format = '\[[$user]($style)'
+
+[hostname]
+ssh_only = false
+ssh_symbol = "🌐 "
+format = '[@$hostname]($style)\] '
+trim_at = '.'
+
+[memory_usage]
+format = '\[$symbol[$ram( | $swap)]($style)\]'
+
+[os]
+format = '\[[$symbol]($style)\]'
+
+
+# Git
+
+[git_branch]
+format = '\[[$symbol$branch]($style)\]'
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style))'
+
+# Environments
+
+[conda]
+format = '\[[$symbol$environment]($style)\]'
+
+[python]
+format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
 
 [bun]
 format = '\[[$symbol($version)]($style)\]'
+
+[deno]
+format = '\[[$symbol($version)]($style)\]'
+
+[nodejs]
+format = '\[[$symbol($version)]($style)\]'
+
+[rust]
+format = '\[[$symbol($version)]($style)\]'
+
+[dart]
+format = '\[[$symbol($version)]($style)\]'
+
+[docker_context]
+format = '\[[$symbol$context]($style)\]'
+
+
+
+# Extras
+
+[aws]
+format = '\[[$symbol($profile)(\($region\))(\[$duration\])]($style)\]'
 
 [c]
 format = '\[[$symbol($version(-$name))]($style)\]'
@@ -18,23 +83,11 @@ format = '\[[⏱ $duration]($style)\]'
 [cobol]
 format = '\[[$symbol($version)]($style)\]'
 
-[conda]
-format = '\[[$symbol$environment]($style)\]'
-
 [crystal]
 format = '\[[$symbol($version)]($style)\]'
 
 [daml]
 format = '\[[$symbol($version)]($style)\]'
-
-[dart]
-format = '\[[$symbol($version)]($style)\]'
-
-[deno]
-format = '\[[$symbol($version)]($style)\]'
-
-[docker_context]
-format = '\[[$symbol$context]($style)\]'
 
 [dotnet]
 format = '\[[$symbol($version)(🎯 $tfm)]($style)\]'
@@ -56,12 +109,6 @@ format = '\[[$symbol$branch]($style)\]'
 
 [gcloud]
 format = '\[[$symbol$account(@$domain)(\($region\))]($style)\]'
-
-[git_branch]
-format = '\[[$symbol$branch]($style)\]'
-
-[git_status]
-format = '([\[$all_status$ahead_behind\]]($style))'
 
 [golang]
 format = '\[[$symbol($version)]($style)\]'
@@ -99,9 +146,6 @@ format = '\[[$symbol$context( \($namespace\))]($style)\]'
 [lua]
 format = '\[[$symbol($version)]($style)\]'
 
-[memory_usage]
-format = '\[$symbol[$ram( | $swap)]($style)\]'
-
 [meson]
 format = '\[[$symbol$project]($style)\]'
 
@@ -111,9 +155,6 @@ format = '\[[$symbol($version)]($style)\]'
 [nix_shell]
 format = '\[[$symbol$state( \($name\))]($style)\]'
 
-[nodejs]
-format = '\[[$symbol($version)]($style)\]'
-
 [ocaml]
 format = '\[[$symbol($version)(\($switch_indicator$switch_name\))]($style)\]'
 
@@ -122,9 +163,6 @@ format = '\[[$symbol($version)]($style)\]'
 
 [openstack]
 format = '\[[$symbol$cloud(\($project\))]($style)\]'
-
-[os]
-format = '\[[$symbol]($style)\]'
 
 [package]
 format = '\[[$symbol$version]($style)\]'
@@ -144,9 +182,6 @@ format = '\[[$symbol$stack]($style)\]'
 [purescript]
 format = '\[[$symbol($version)]($style)\]'
 
-[python]
-format = '\[[${symbol}${pyenv_prefix}(${version})(\($virtualenv\))]($style)\]'
-
 [raku]
 format = '\[[$symbol($version-$vm_version)]($style)\]'
 
@@ -154,9 +189,6 @@ format = '\[[$symbol($version-$vm_version)]($style)\]'
 format = '\[[$symbol($version)]($style)\]'
 
 [ruby]
-format = '\[[$symbol($version)]($style)\]'
-
-[rust]
 format = '\[[$symbol($version)]($style)\]'
 
 [scala]
@@ -173,12 +205,6 @@ format = '\[[$symbol($version)]($style)\]'
 
 [terraform]
 format = '\[[$symbol$workspace]($style)\]'
-
-[time]
-format = '\[[$time]($style)\]'
-
-[username]
-format = '\[[$user]($style)\]'
 
 [vagrant]
 format = '\[[$symbol($version)]($style)\]'
