@@ -264,11 +264,11 @@ function Repair-Profile {
 function Update-Starship-Config {
   try {
     $url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main/starship/starship.toml"
-    $oldhash = Get-FileHash "$env:HOME/.config/starship.toml"
+    $oldhash = Get-FileHash "$env:USERPROFILE/.config/starship.toml"
     Invoke-RestMethod $url -OutFile "$env:temp/starship.toml"
     $newhash = Get-FileHash "$env:temp/starship.toml"
     if ($newhash.Hash -ne $oldhash.Hash) {
-      Copy-Item -Path "$env:temp/starship.toml" -Destination "$env:HOME/.config/starship.toml" -Force
+      Copy-Item -Path "$env:temp/starship.toml" -Destination "$env:USERPROFILE/.config/starship.toml" -Force
       Write-Host "Starship Config has been updated." -ForegroundColor Yellow
     }
     else {
