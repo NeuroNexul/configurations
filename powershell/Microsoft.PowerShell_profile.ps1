@@ -4,14 +4,13 @@
 #                                                                            #
 ##############################################################################
 
-$debug = $true
+$debug = $false
+
+# Define the path to the file that stores the last execution time
+$timeFilePath = "$env:USERPROFILE\Documents\PowerShell\LastExecutionTime.txt"
 
 # Set update interval for PowerShell prompt
-if ($debug) {
-  $updateInterval = -1
-} else {
-  $updateInterval = 7 # days
-}
+$updateInterval = 7
 
 if ($debug) {
   Write-Host "#######################################" -ForegroundColor Red
@@ -62,13 +61,13 @@ Set-Alias -Name nano -Value 'C:\Program Files\Git\usr\bin\nano.exe'
 
 # Editor Configuration
 $EDITOR = if (Test-CommandExists nvim) { 'nvim' }
-          elseif (Test-CommandExists code) { 'code' }
-          elseif (Test-CommandExists pvim) { 'pvim' }
-          elseif (Test-CommandExists vim) { 'vim' }
-          elseif (Test-CommandExists vi) { 'vi' }
-          elseif (Test-CommandExists notepad++) { 'notepad++' }
-          elseif (Test-CommandExists sublime_text) { 'sublime_text' }
-          else { 'notepad' }
+elseif (Test-CommandExists code) { 'code' }
+elseif (Test-CommandExists pvim) { 'pvim' }
+elseif (Test-CommandExists vim) { 'vim' }
+elseif (Test-CommandExists vi) { 'vi' }
+elseif (Test-CommandExists notepad++) { 'notepad++' }
+elseif (Test-CommandExists sublime_text) { 'sublime_text' }
+else { 'notepad' }
 Set-Alias -Name edit -Value $EDITOR
 
 # Create new File
@@ -124,6 +123,67 @@ function flushdns {
   Write-Host "DNS has been flushed"
 }
 
+function uptime {
+  try {
+    # check powershell version
+    if ($PSVersionTable.PSVersion.Major -eq 5) {
+      $lastBoot = (Get-WmiObject win32_operatingsystem).LastBootUpTime
+      $bootTime = [System.Management.ManagementDateTimeConverter]::ToDateTime($lastBoot)
+    }
+    else {
+      $lastBootStr = net statistics workstation | Select-String "since" | ForEach-Object { $_.ToString().Replace('Statistics since ', '') }
+      # check date format
+      if ($lastBootStr -match '^\d{2}/\d{2}/\d{4}') {
+        $dateFormat = 'dd/MM/yyyy'
+      }
+      elseif ($lastBootStr -match '^\d{2}-\d{2}-\d{4}') {
+        $dateFormat = 'dd-MM-yyyy'
+      }
+      elseif ($lastBootStr -match '^\d{4}/\d{2}/\d{2}') {
+        $dateFormat = 'yyyy/MM/dd'
+      }
+      elseif ($lastBootStr -match '^\d{4}-\d{2}-\d{2}') {
+        $dateFormat = 'yyyy-MM-dd'
+      }
+      elseif ($lastBootStr -match '^\d{2}\.\d{2}\.\d{4}') {
+        $dateFormat = 'dd.MM.yyyy'
+      }
+          
+      # check time format
+      if ($lastBootStr -match '\bAM\b' -or $lastBootStr -match '\bPM\b') {
+        $timeFormat = 'h:mm:ss tt'
+      }
+      else {
+        $timeFormat = 'HH:mm:ss'
+      }
+
+      $bootTime = [System.DateTime]::ParseExact($lastBootStr, "$dateFormat $timeFormat", [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+
+    # Format the start time
+    ### $formattedBootTime = $bootTime.ToString("dddd, MMMM dd, yyyy HH:mm:ss", [System.Globalization.CultureInfo]::InvariantCulture)
+    $formattedBootTime = $bootTime.ToString("dddd, MMMM dd, yyyy HH:mm:ss", [System.Globalization.CultureInfo]::InvariantCulture) + " [$lastBootStr]"
+    Write-Host "System started on: $formattedBootTime" -ForegroundColor DarkGray
+
+    # calculate uptime
+    $uptime = (Get-Date) - $bootTime
+
+    # Uptime in days, hours, minutes, and seconds
+    $days = $uptime.Days
+    $hours = $uptime.Hours
+    $minutes = $uptime.Minutes
+    $seconds = $uptime.Seconds
+
+    # Uptime output
+    Write-Host ("Uptime: {0} days, {1} hours, {2} minutes, {3} seconds" -f $days, $hours, $minutes, $seconds) -ForegroundColor Blue
+      
+
+  }
+  catch {
+    Write-Error "An error occurred while retrieving system uptime."
+  }
+}
+
 function Clear-Cache {
   # add clear cache logic here
   Write-Host "Clearing cache..." -ForegroundColor Cyan
@@ -149,26 +209,55 @@ function Clear-Cache {
 
 function Update-PowerShell {
   try {
-      Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
-      $updateNeeded = $false
-      $currentVersion = $PSVersionTable.PSVersion.ToString()
-      $gitHubApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
-      $latestReleaseInfo = Invoke-RestMethod -Uri $gitHubApiUrl
-      $latestVersion = $latestReleaseInfo.tag_name.Trim('v')
-      if ($currentVersion -lt $latestVersion) {
-          $updateNeeded = $true
-      }
+    Write-Host "Checking for PowerShell updates..." -ForegroundColor Cyan
+    $updateNeeded = $false
+    $currentVersion = $PSVersionTable.PSVersion.ToString()
+    $gitHubApiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+    $latestReleaseInfo = Invoke-RestMethod -Uri $gitHubApiUrl
+    $latestVersion = $latestReleaseInfo.tag_name.Trim('v')
+    if ($currentVersion -lt $latestVersion) {
+      $updateNeeded = $true
+    }
 
-      if ($updateNeeded) {
-          Write-Host "Updating PowerShell..." -ForegroundColor Yellow
-          Start-Process powershell.exe -ArgumentList "-NoProfile -Command winget upgrade Microsoft.PowerShell --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
-          Write-Host "PowerShell has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
-      } else {
-          Write-Host "Your PowerShell is up to date." -ForegroundColor Green
-      }
-  } catch {
-      Write-Error "Failed to update PowerShell. Error: $_"
+    if ($updateNeeded) {
+      Write-Host "Updating PowerShell..." -ForegroundColor Yellow
+      Start-Process powershell.exe -ArgumentList "-NoProfile -Command winget upgrade Microsoft.PowerShell --accept-source-agreements --accept-package-agreements" -Wait -NoNewWindow
+      Write-Host "PowerShell has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
+    }
+    else {
+      Write-Host "Your PowerShell is up to date." -ForegroundColor Green
+    }
   }
+  catch {
+    Write-Error "Failed to update PowerShell. Error: $_"
+  }
+}
+
+# Check for Profile Updates
+function Update-Profile {
+  try {
+    $url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main/powershell/Microsoft.PowerShell_profile.ps1"
+    $oldhash = Get-FileHash $PROFILE
+    Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
+    $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
+    if ($newhash.Hash -ne $oldhash.Hash) {
+      Copy-Item -Path "$env:temp/Microsoft.PowerShell_profile.ps1" -Destination $PROFILE -Force
+      Write-Host "Profile has been updated. Please restart your shell to reflect changes" -ForegroundColor Magenta
+    }
+    else {
+      Write-Host "Profile is up to date." -ForegroundColor Green
+    }
+  }
+  catch {
+    Write-Error "Unable to check for `$profile updates: $_"
+  }
+  finally {
+    Remove-Item "$env:temp/Microsoft.PowerShell_profile.ps1" -ErrorAction SilentlyContinue
+  }
+}
+
+function Repair-Profile {
+  & $PROFILE
 }
 
 
@@ -177,6 +266,42 @@ function Update-PowerShell {
 #   Powershell Profile Management    #
 #                                    #
 ######################################
+
+# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
+if (-not $debug -and `
+  ($updateInterval -eq -1 -or `
+      -not (Test-Path $timeFilePath) -or `
+    ((Get-Date) - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null)).TotalDays -gt $updateInterval)) {
+
+  Update-Profile
+  $currentTime = Get-Date -Format 'yyyy-MM-dd'
+  $currentTime | Out-File -FilePath $timeFilePath
+
+}
+elseif (-not $debug) {
+  Write-Warning "Profile update skipped. Last update check was within the last $updateInterval day(s)."
+}
+else {
+  Write-Warning "Skipping profile update check in debug mode"
+}
+
+# skip in debug mode
+# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
+if (-not $debug -and `
+  ($updateInterval -eq -1 -or `
+      -not (Test-Path $timeFilePath) -or `
+    ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
+
+  Update-PowerShell
+  $currentTime = Get-Date -Format 'yyyy-MM-dd'
+  $currentTime | Out-File -FilePath $timeFilePath
+}
+elseif (-not $debug) {
+  Write-Warning "PowerShell update skipped. Last update check was within the last $updateInterval day(s)."
+}
+else {
+  Write-Warning "Skipping PowerShell update in debug mode"
+}
 
 # Quick Access to Editing the Profile
 function Edit-Profile {
