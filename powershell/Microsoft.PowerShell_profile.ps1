@@ -4,7 +4,7 @@
 #                                                                            #
 ##############################################################################
 
-$debug = $false
+$debug = $true
 
 # Define the path to the file that stores the last execution time
 $timeFilePath = "$env:USERPROFILE\Documents\PowerShell\LastExecutionTime.txt"
@@ -260,6 +260,29 @@ function Repair-Profile {
   & $PROFILE
 }
 
+# Check for starship config updates
+function Update-Starship-Config {
+  try {
+    $url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main/starship/starship.toml"
+    $oldhash = Get-FileHash "$env:HOME/.config/starship.toml"
+    Invoke-RestMethod $url -OutFile "$env:temp/starship.toml"
+    $newhash = Get-FileHash "$env:temp/starship.toml"
+    if ($newhash.Hash -ne $oldhash.Hash) {
+      Copy-Item -Path "$env:temp/starship.toml" -Destination "$env:HOME/.config/starship.toml" -Force
+      Write-Host "Starship Config has been updated." -ForegroundColor Yellow
+    }
+    else {
+      Write-Host "Starship Config is up to date." -ForegroundColor Green
+    }
+  }
+  catch {
+    Write-Error "Unable to check for Starship Config updates: $_"
+  }
+  finally {
+    Remove-Item "$env:temp/starship.toml" -ErrorAction SilentlyContinue
+  }
+}
+
 
 ######################################
 #                                    #
@@ -267,24 +290,14 @@ function Repair-Profile {
 #                                    #
 ######################################
 
-# Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
-if (-not $debug -and `
-  ($updateInterval -eq -1 -or `
-      -not (Test-Path $timeFilePath) -or `
-    ((Get-Date) - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null)).TotalDays -gt $updateInterval)) {
-
-  Update-Profile
-  $currentTime = Get-Date -Format 'yyyy-MM-dd'
-  $currentTime | Out-File -FilePath $timeFilePath
-
-}
-elseif (-not $debug) {
-  Write-Warning "Profile update skipped. Last update check was within the last $updateInterval day(s)."
+if (-not $debug) {
+  Update-Starship-Config
 }
 else {
-  Write-Warning "Skipping profile update check in debug mode"
+  Write-Warning "Skipping Starship Config update in debug mode"
 }
 
+# Check for updates and update profile
 # skip in debug mode
 # Check if not in debug mode AND (updateInterval is -1 OR file doesn't exist OR time difference is greater than the update interval)
 if (-not $debug -and `
@@ -292,6 +305,7 @@ if (-not $debug -and `
       -not (Test-Path $timeFilePath) -or `
     ((Get-Date).Date - [datetime]::ParseExact((Get-Content -Path $timeFilePath), 'yyyy-MM-dd', $null).Date).TotalDays -gt $updateInterval)) {
 
+  Update-Profile
   Update-PowerShell
   $currentTime = Get-Date -Format 'yyyy-MM-dd'
   $currentTime | Out-File -FilePath $timeFilePath
