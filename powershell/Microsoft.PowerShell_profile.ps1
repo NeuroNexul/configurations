@@ -4,13 +4,19 @@
 #                                                                            #
 ##############################################################################
 
+# Set it to true for debugging purposes
+# This will show debug messages and prevent the profile from updating through repository
+# This is useful for development and testing of the profile
 $debug = $false
+
+# Set the repository URL for the profile
+$repo_url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main"
 
 # Define the path to the file that stores the last execution time
 $timeFilePath = "$env:USERPROFILE\Documents\PowerShell\LastExecutionTime.txt"
 
 # Set update interval for PowerShell prompt
-$updateInterval = 7
+$updateInterval = 7 # in days
 
 if ($debug) {
   Write-Host "#######################################" -ForegroundColor Red
@@ -62,6 +68,7 @@ Set-Alias -Name nano -Value 'C:\Program Files\Git\usr\bin\nano.exe'
 # Editor Configuration
 $EDITOR = if (Test-CommandExists nvim) { 'nvim' }
 elseif (Test-CommandExists code) { 'code' }
+elseif (Test-CommandExists nano) { 'nano' }
 elseif (Test-CommandExists pvim) { 'pvim' }
 elseif (Test-CommandExists vim) { 'vim' }
 elseif (Test-CommandExists vi) { 'vi' }
@@ -236,7 +243,7 @@ function Update-PowerShell {
 # Check for Profile Updates
 function Update-Profile {
   try {
-    $url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main/powershell/Microsoft.PowerShell_profile.ps1"
+    $url = "$repo_url/powershell/Microsoft.PowerShell_profile.ps1"
     $oldhash = Get-FileHash $PROFILE
     Invoke-RestMethod $url -OutFile "$env:temp/Microsoft.PowerShell_profile.ps1"
     $newhash = Get-FileHash "$env:temp/Microsoft.PowerShell_profile.ps1"
@@ -263,7 +270,7 @@ function Repair-Profile {
 # Check for starship config updates
 function Update-Starship-Config {
   try {
-    $url = "https://raw.githubusercontent.com/NeuroNexul/configurations/main/starship/starship.toml"
+    $url = "$repo_url/starship/starship.toml"
     $oldhash = Get-FileHash "$env:USERPROFILE/.config/starship.toml"
     Invoke-RestMethod $url -OutFile "$env:temp/starship.toml"
     $newhash = Get-FileHash "$env:temp/starship.toml"
