@@ -31,6 +31,8 @@ if ($debug) {
   Write-Host "#######################################" -ForegroundColor Red
 }
 
+# Initial messages
+Write-Host "Loading PowerShell profile..." -ForegroundColor Yellow
 
 # Install starship if not installed
 $is_installed = Get-Command starship -ErrorAction SilentlyContinue
